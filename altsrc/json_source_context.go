@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v2"
 )
 
 // NewJSONSourceFromFlagFunc returns a func that takes a cli.Context
@@ -29,7 +29,13 @@ func NewJSONSourceFromFile(f string) (InputSourceContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewJSONSource(data)
+	s, err := newJSONSource(data)
+	if err != nil {
+		return nil, err
+	}
+
+	s.file = f
+	return s, nil
 }
 
 // NewJSONSourceFromReader returns an InputSourceContext suitable for
@@ -45,11 +51,19 @@ func NewJSONSourceFromReader(r io.Reader) (InputSourceContext, error) {
 // NewJSONSource returns an InputSourceContext suitable for retrieving
 // config variables from raw JSON data.
 func NewJSONSource(data []byte) (InputSourceContext, error) {
+	return newJSONSource(data)
+}
+
+func newJSONSource(data []byte) (*jsonSource, error) {
 	var deserialized map[string]interface{}
 	if err := json.Unmarshal(data, &deserialized); err != nil {
 		return nil, err
 	}
 	return &jsonSource{deserialized: deserialized}, nil
+}
+
+func (x *jsonSource) Source() string {
+	return x.file
 }
 
 func (x *jsonSource) Int(name string) (int, error) {
@@ -175,12 +189,6 @@ func (x *jsonSource) Bool(name string) (bool, error) {
 	return v, nil
 }
 
-// since this source appears to require all configuration to be specified, the
-// concept of a boolean defaulting to true seems inconsistent with no defaults
-func (x *jsonSource) BoolT(name string) (bool, error) {
-	return false, fmt.Errorf("unsupported type BoolT for JSONSource")
-}
-
 func (x *jsonSource) getValue(key string) (interface{}, error) {
 	return jsonGetValue(key, x.deserialized)
 }
@@ -204,5 +212,6 @@ func jsonGetValue(key string, m map[string]interface{}) (interface{}, error) {
 }
 
 type jsonSource struct {
+	file         string
 	deserialized map[string]interface{}
 }

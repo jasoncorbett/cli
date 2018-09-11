@@ -14,7 +14,7 @@ import (
 	"runtime"
 	"strings"
 
-	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v2"
 
 	"gopkg.in/yaml.v2"
 )
@@ -32,7 +32,7 @@ func NewYamlSourceFromFile(file string) (InputSourceContext, error) {
 		return nil, fmt.Errorf("Unable to load Yaml file '%s': inner error: \n'%v'", ysc.FilePath, err.Error())
 	}
 
-	return &MapInputSource{valueMap: results}, nil
+	return &MapInputSource{file: file, valueMap: results}, nil
 }
 
 // NewYamlSourceFromFlagFunc creates a new Yaml InputSourceContext from a provided flag name and source context.
@@ -86,7 +86,7 @@ func loadDataFrom(filePath string) ([]byte, error) {
 			return nil, fmt.Errorf("Cannot read from file: '%s' because it does not exist.", filePath)
 		}
 		return ioutil.ReadFile(filePath)
+	} else {
+		return nil, fmt.Errorf("unable to determine how to load from path %s", filePath)
 	}
-
-	return nil, fmt.Errorf("unable to determine how to load from path %s", filePath)
 }

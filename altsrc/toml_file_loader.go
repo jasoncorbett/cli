@@ -10,7 +10,7 @@ import (
 	"reflect"
 
 	"github.com/BurntSushi/toml"
-	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/urfave/cli.v2"
 )
 
 type tomlMap struct {
@@ -66,9 +66,9 @@ func unmarshalMap(i interface{}) (ret map[interface{}]interface{}, err error) {
 	return ret, nil
 }
 
-func (tm *tomlMap) UnmarshalTOML(i interface{}) error {
+func (self *tomlMap) UnmarshalTOML(i interface{}) error {
 	if tmp, err := unmarshalMap(i); err == nil {
-		tm.Map = tmp
+		self.Map = tmp
 	} else {
 		return err
 	}
@@ -86,7 +86,7 @@ func NewTomlSourceFromFile(file string) (InputSourceContext, error) {
 	if err := readCommandToml(tsc.FilePath, &results); err != nil {
 		return nil, fmt.Errorf("Unable to load TOML file '%s': inner error: \n'%v'", tsc.FilePath, err.Error())
 	}
-	return &MapInputSource{valueMap: results.Map}, nil
+	return &MapInputSource{file: file, valueMap: results.Map}, nil
 }
 
 // NewTomlSourceFromFlagFunc creates a new TOML InputSourceContext from a provided flag name and source context.
